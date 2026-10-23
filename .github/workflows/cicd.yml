@@ -90,5 +90,5 @@ jobs:
 # 4. pytest runs the unit tests.
 # 5. If tests pass, Docker builds the image.
 # 6. GitHub logs in to Docker Hub using secrets.
-# 7. Docker image is pushed to Docker Hub.
+# 7. Docker image is pushed to Docker Hub...
 # 8. The image digest is displayed.
