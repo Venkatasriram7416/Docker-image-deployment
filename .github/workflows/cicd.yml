@@ -1,97 +1,94 @@
 
 name: CI/CD for Dockerized Flask App # Name of the workflow
 
-# Events: Run the workflow when code is pushed to main
-# or when a pull request targets the main branch.
+# Events: Run when code is pushed to main or a PR targets main
 on:
   push:
     branches: [main]
-
   pull_request:
     branches: [main]
 
-# Give the workflow read access to repository contents.
+  # Allows us to run the workflow manually from GitHub
+  workflow_dispatch:
+
+# Give read permission to the repository
 permissions:
   contents: read
 
 jobs:
 
-  # Job 1: Build the application and run unit tests.
+  # Job 1: Build and test the Flask application
   build-and-test:
-    runs-on: ubuntu-latest # Use the latest Ubuntu GitHub runner
+    runs-on: ubuntu-latest # Latest Ubuntu runner
 
     steps:
-
-      # Step 1: Checkout the source code from GitHub.
+      # Step 1: Checkout the GitHub repository
       - name: Checkout code
         uses: actions/checkout@v7
 
-      # Step 2: Set up the Python environment.
+      # Step 2: Set up Python
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: '3.13' # Modern Python version
+          python-version: '3.13'
 
-      # Step 3: Install the project dependencies.
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install pytest
 
-      # Step 4: Run unit tests using pytest.
-      # Pytest discovers files named test_*.py or *_test.py
-      # and functions beginning with test_.
+      # Step 4: Run unit tests
+      # pytest finds test_*.py files and test_* functions
       - name: Run tests
         run: |
           python -m pytest -v
 
-  # Job 2: Build the Docker image and publish it to Docker Hub.
+  # Job 2: Build Docker image and publish to Docker Hub
   build-and-publish:
-    needs: build-and-test # Run only after tests pass
+    needs: build-and-test # Run after tests pass
     runs-on: ubuntu-latest
 
-    # Do not publish Docker images from pull requests.
-    if: github.event_name == 'push'
+    # Publish on pushes to main, not pull requests
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
 
     steps:
-
-      # Step 1: Checkout the repository source code.
+      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v7
 
-      # Step 2: Set up Docker Buildx.
-      # Buildx provides advanced Docker image building.
+      # Step 2: Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      # Step 3: Log in to Docker Hub using GitHub secrets.
+      # Step 3: Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 4: Build and push the Docker image.
+      # Step 4: Build and push Docker image
       - name: Build and push Docker image
         id: docker_build
         uses: docker/build-push-action@v7
         with:
-          context: . # Use the repository root as build context
-          push: true # Push the image to Docker Hub
+          context: .
+          file: ./DockerFile # Matches your current filename
+          push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/flasktest-app:latest
 
-      # Step 5: Print the digest of the published image.
+      # Step 5: Display the Docker image digest
       - name: Image digest
         run: echo "Image digest ${{ steps.docker_build.outputs.digest }}"
 
 # Workflow summary:
-# 1. Push code or open a pull request targeting main.
+# 1. Push code or create a pull request for main.
 # 2. GitHub checks out the repository.
-# 3. Python is installed and dependencies are loaded.
-# 4. Pytest runs the unit tests.
-# 5. If tests pass and the event is a push,
-#    Docker Buildx builds the application image.
-# 6. GitHub logs in to Docker Hub using stored secrets.
-# 7. The Docker image is pushed to Docker Hub.
-# 8. The published image digest is displayed.
+# 3. Python and dependencies are installed.
+# 4. pytest runs the unit tests.
+# 5. If tests pass, Docker builds the image.
+# 6. GitHub logs in to Docker Hub using secrets.
+# 7. Docker image is pushed to Docker Hub.
+# 8. The image digest is displayed.
