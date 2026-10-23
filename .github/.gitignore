@@ -1,0 +1,16 @@
+#files are not tracked by git! to be known as ignored files
+#virtual environment folder
+.venv
+
+# Ignore Python virtual environment
+.venv/
+venv/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore secrets
+.env
+.env.*
+!.env.example
