@@ -16,6 +16,12 @@ permissions:
   contents: read
 
 jobs:
+  dockerbuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build The Docker Image
+        run: docker build . --file DockerFile --tag workflow-test:$(date +%s)
 
   # Job 1: Build and test the Flask application
   build-and-test:
