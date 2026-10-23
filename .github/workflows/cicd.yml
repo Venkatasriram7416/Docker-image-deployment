@@ -79,7 +79,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/flasktest-app:latest
 
-      # Step 5: Display the Docker image digest
+      # Step 5: Display the Docker image digest..
       - name: Image digest
         run: echo "Image digest ${{ steps.docker_build.outputs.digest }}"
 
